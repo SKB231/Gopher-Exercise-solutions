@@ -1,50 +1,65 @@
 package main
 
 import (
+	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
-	"strings"
+	"time"
 )
 
-func readData() []string {
-	file, err := os.Open("problems.csv")
+func printErr(err error) {
 	if err != nil {
-		fmt.Println("Error opening file")
 		fmt.Println(err)
+		os.Exit(1)
 	}
-	dataArr := make([]byte, 2)
-	data := make([]byte, 0)
+}
+
+func recordTime(timer *time.Timer, quit chan bool, totalCap *int, totalCorrect *int) {
+	fmt.Println("starting new timer")
+mainLoop:
 	for {
-		n, err := file.Read(dataArr)
-		if err != nil {
-			break
+		select {
+		case <-timer.C:
+			fmt.Println("Reached time limit!")
+			printStats(totalCorrect, totalCap)
+			os.Exit(0)
+		case <-quit:
+			fmt.Println("Stopping time limit check")
+			break mainLoop
 		}
-		data = append(data, dataArr[:n]...)
 	}
-	questions := strings.Split(string(data), "\n")
-	return questions
+}
+
+func printStats(totalCap *int, totalCorrect *int) {
+	fmt.Printf("You got %v of %v correct", *totalCap, *totalCorrect)
 }
 
 func main() {
-	questions := readData()
-	numCorrect := 0
-	numQuestions := 0
-	for _, question := range questions {
-		if len(question) <= 0 {
-			break
-		}
-		res := (strings.Split(question, ","))
-		q, ans := res[0], res[1]
+	file, err := os.Open("problems.csv")
+	printErr(err)
+	lines, err := csv.NewReader(file).ReadAll()
+	printErr(err)
+	limitFlag := flag.Int("limit", 30, "The time limit per question")
+	flag.Parse()
+	fmt.Printf("Asking questions with time limit of %v seconds \n", *limitFlag)
+	totalCap := len(lines)
+	totalCorrect := 0
+	for _, line := range lines {
+		timer := time.NewTimer(time.Duration(*limitFlag) * time.Second)
+		quit := make(chan bool)
+		go recordTime(timer, quit, &totalCap, &totalCorrect)
+		question, answer := line[0], line[1]
+		print(question, " => ")
+		printErr(err)
 		var userAnswer string
-		numQuestions += 1
-		fmt.Println(q)
-		fmt.Scan(&userAnswer)
-		if userAnswer == ans {
-			fmt.Println("correct answer")
-			numCorrect += 1
+		fmt.Scanf("%v", &userAnswer)
+		if userAnswer == answer {
+			fmt.Println("correct")
+			totalCorrect += 1
 		} else {
-			fmt.Println("Wrong answer")
+			fmt.Println("Incorrect")
 		}
+		quit <- true
 	}
-	fmt.Fprintf(os.Stdout, `You got %v questions correct out of %v`, numCorrect, numQuestions)
 }
