@@ -38,7 +38,12 @@ func ParseStory() adventureBook {
 var book adventureBook
 
 func handleBaseRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.URL.String())
+	urlArc := r.URL.Query().Get("arc")
+	_, ok := book[urlArc]
+	if urlArc == "" || !ok {
+		// Went to unknown location
+		urlArc = "intro"
+	}
 	t, err := template.ParseFiles("template.html")
 	if err != nil {
 		fmt.Println("Error when returning file => ", err)
@@ -49,12 +54,11 @@ func handleBaseRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	data := map[string]interface{}{
-		"arcTitle": book["intro"].Title,
-		"story":    book["intro"].Story,
-		"options":  book["intro"].Options,
+		"arcTitle": book[urlArc].Title,
+		"story":    book[urlArc].Story,
+		"options":  book[urlArc].Options,
 		"Style":    template.CSS(f),
 	}
-	fmt.Println(data)
 	err = t.Execute(w, data)
 	if err != nil {
 		fmt.Println("Error when returning file ", err)

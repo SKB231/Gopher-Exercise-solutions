@@ -28,7 +28,19 @@
       <h3>Options</h3>
       <ul>
         {{range .options}}
-        <li><button>{{.Arc}}</button>{{.Text}}</li>
+        <li>
+          <form>
+            <button
+              action="/"
+              formmethod="get"
+              type="submit"
+              name="arc"
+              value="{{.Arc}}"
+            >
+              {{.Arc}}</button
+            >{{.Text}}
+          </form>
+        </li>
         {{end}}
       </ul>
     </div>
