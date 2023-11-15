@@ -14,6 +14,15 @@ func returnNodeType(node *html.Node) string {
 	return nodeTypeName[node.Type]
 }
 
+// The linkResult struct contains the link and the text element.
+// link: string text:string
+type linkResult struct {
+	link string
+	text string
+}
+
+var result []linkResult = make([]linkResult, 0)
+
 // dfs method takes a single node, and a boolean and goes over every available node in the dfs Tree.
 // Only set the childAnchor to true if the next node is the child of an anchor tag.
 func dfs(node *html.Node, childOfAnchor bool, finalString []byte) []byte {
@@ -43,11 +52,14 @@ func dfs(node *html.Node, childOfAnchor bool, finalString []byte) []byte {
 		resultString = finalString
 	}
 	nextChildIsAnchor := false
+
+	hrefVal := ""
+
 	if node.Type == 3 && node.Data == "a" {
 		// We have reached an anchor tag. Extract the available url and text element.
 		for _, attr := range node.Attr {
 			if attr.Key == "href" {
-				fmt.Println("Link is ", attr.Val)
+				hrefVal = attr.Val
 			}
 		}
 		nextChildIsAnchor = true
@@ -65,8 +77,9 @@ func dfs(node *html.Node, childOfAnchor bool, finalString []byte) []byte {
 	}
 
 	if nextChildIsAnchor {
-		fmt.Println(resultString)
-		fmt.Println(string(resultString))
+		resultString = []byte(strings.TrimSpace(string(resultString)))
+		nextStruct := linkResult{link: hrefVal, text: string(resultString)}
+		result = append(result, nextStruct)
 	}
 
 	// Iterate over all siblings. If nil, then will stop at the beginning of the function.
@@ -94,6 +107,8 @@ func main() {
 		fmt.Println("Error parsing document")
 		fmt.Println(err)
 	}
-	fmt.Println("Root doc", returnNodeType(doc))
 	dfs(doc, false, make([]byte, 0))
+	for _, linkStruct := range result {
+		fmt.Println(linkStruct)
+	}
 }
