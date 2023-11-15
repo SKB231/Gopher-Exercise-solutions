@@ -1,9 +1,8 @@
-package main
+package linkParser
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"io"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -89,26 +88,15 @@ func dfs(node *html.Node, childOfAnchor bool, finalString []byte) []byte {
 	return finalString
 }
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Println(" Usage: \n ", os.Args[0], " ex<number>.html")
-		return
-	}
-	exNum := os.Args[1]
-	absPath, _ := filepath.Abs("./testHTML/ex" + exNum + ".html")
-	fmt.Println(absPath)
-	file, err := os.Open(absPath)
-	if err != nil {
-		fmt.Println("Error opening file. ")
-		fmt.Println(err)
-	}
-	doc, err := html.Parse(file)
+// Parse function
+// @param r io.Reader this is the reader to the text containing the html to read. An array containing link Result structs is returned.
+func Parse(r io.Reader) []linkResult {
+	result = make([]linkResult, 0)
+	doc, err := html.Parse(r)
 	if err != nil {
 		fmt.Println("Error parsing document")
 		fmt.Println(err)
 	}
 	dfs(doc, false, make([]byte, 0))
-	for _, linkStruct := range result {
-		fmt.Println(linkStruct)
-	}
+	return result
 }
