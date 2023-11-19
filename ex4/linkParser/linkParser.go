@@ -16,8 +16,8 @@ func returnNodeType(node *html.Node) string {
 // The linkResult struct contains the link and the text element.
 // link: string text:string
 type linkResult struct {
-	link string
-	text string
+	Link string
+	Text string
 }
 
 var result []linkResult = make([]linkResult, 0)
@@ -77,7 +77,7 @@ func dfs(node *html.Node, childOfAnchor bool, finalString []byte) []byte {
 
 	if nextChildIsAnchor {
 		resultString = []byte(strings.TrimSpace(string(resultString)))
-		nextStruct := linkResult{link: hrefVal, text: string(resultString)}
+		nextStruct := linkResult{Link: hrefVal, Text: string(resultString)}
 		result = append(result, nextStruct)
 	}
 
@@ -90,13 +90,14 @@ func dfs(node *html.Node, childOfAnchor bool, finalString []byte) []byte {
 
 // Parse function
 // @param r io.Reader this is the reader to the text containing the html to read. An array containing link Result structs is returned.
-func Parse(r io.Reader) []linkResult {
+func Parse(r io.Reader) ([]linkResult, error) {
 	result = make([]linkResult, 0)
 	doc, err := html.Parse(r)
 	if err != nil {
 		fmt.Println("Error parsing document")
 		fmt.Println(err)
+		return nil, err
 	}
 	dfs(doc, false, make([]byte, 0))
-	return result
+	return result, err
 }
